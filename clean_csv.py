@@ -30,12 +30,14 @@ def clean_amount(df):
 
 def remove_duplicates(df):
     # TODO: drop exact duplicate rows
+    df=df.drop_duplicates()
     return df
 
 
 def main():
     df = load("orders_messy.csv")
-    df = clean_text(df)
+    df = clean_text(df) 
+    df = remove_duplicates(df)
     print(df)  # temporary: lets you see each change as you build
 
 
