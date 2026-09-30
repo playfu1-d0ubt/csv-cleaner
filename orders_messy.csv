@@ -1,0 +1,9 @@
+order_id,customer_name,email,order_date,amount,city
+1001,  alice johnson ,ALICE@EXAMPLE.COM,2026-09-01,25.50,london
+1002,BOB SMITH,bob@example.com,01/09/2026,40,Manchester
+1003,carol   white,carol@example.com,"Sep 3, 2026",£15.00,  LEEDS
+1001,  alice johnson ,ALICE@EXAMPLE.COM,2026-09-01,25.50,london
+1004,Dave Brown,,2026-09-04,60,bristol
+1005,eve DAVIS,eve@example.com,05-09-2026,,London
+1006,frank miller,frank@example.com,2026/09/06,30.00,Glasgow
+1007,  grace LEE,grace@example.com,7 Sep 2026,£22.75,edinburgh
