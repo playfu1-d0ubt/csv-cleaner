@@ -1,7 +1,28 @@
 import pandas as pd
+from datetime import datetime
+
+DATE_FORMATS = [
+    "%Y-%m-%d",   # 2026-09-01
+    "%Y/%m/%d",   # 2026/09/06
+    "%d/%m/%Y",   # 01/09/2026   (UK: day first)
+    "%d-%m-%Y",   # 05-09-2026
+    "%b %d, %Y",  # Sep 3, 2026
+    "%d %b %Y",   # 7 Sep 2026
+]
 
 def load(path):
     return pd.read_csv(path)
+
+def parse_date(value):
+    if pd.isna(value):
+        return None
+    text = str(value).strip()
+    for fmt in DATE_FORMATS:
+        try:
+            return datetime.strptime(text, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    return None   # no format matched
 
 
 def clean_text(df):
@@ -19,7 +40,8 @@ def clean_text(df):
 
 
 def clean_dates(df):
-    # TODO: convert order_date to one format (YYYY-MM-DD)
+    # convert order_date to one format (YYYY-MM-DD)
+    df["order_date"] = df["order_date"].apply(parse_date)
     return df
 
 
@@ -45,6 +67,7 @@ def main():
     df = clean_text(df) 
     df = clean_amount(df)
     df = remove_duplicates(df)
+    df = clean_dates(df)
     print(df)  # temporary: lets you see each change as you build
 
 
