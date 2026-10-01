@@ -64,11 +64,15 @@ def remove_duplicates(df):
 
 def main():
     df = load("orders_messy.csv")
+    line_in = len(df)
     df = clean_text(df) 
     df = clean_amount(df)
     df = remove_duplicates(df)
     df = clean_dates(df)
+    line_out = len(df)
     print(df)  # temporary: lets you see each change as you build
+    print("Lines in:", line_in)
+    print("Lines out:", line_out)
 
 
 if __name__ == "__main__":
