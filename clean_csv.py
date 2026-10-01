@@ -23,6 +23,13 @@ DATE_FORMATS = [
     "%d %b %Y",   # 7 Sep 2026
 ]
 
+def parse_args():
+    #Read the input and output file names from the command line.
+    parser = argparse.ArgumentParser(description="Clean a messy CSV file.")
+    parser.add_argument("input_file", help="the messy CSV to clean")
+    parser.add_argument("output_file", help="where to save the cleaned CSV")
+    return parser.parse_args()
+
 def load(path):
      # Read the CSV file into a pandas DataFrame.
     return pd.read_csv(path)
@@ -92,21 +99,16 @@ def print_summary(line_in, line_out, df):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Clean a messy CSV file.")
-    parser.add_argument("input_file", help="the messy CSV to clean")
-    parser.add_argument("output_file", help="where to save the cleaned CSV")
-    args = parser.parse_args()
+    args = parse_args()
     df = load(args.input_file)
     line_in = len(df) # count before cleaning, to report duplicates later
     # Order matters: text and amounts first, so duplicates are caught properly
     df = clean_text(df)
-    df = clean_text(df) 
     df = clean_amount(df)
     df = remove_duplicates(df)
     df = clean_dates(df)
     line_out = len(df)
-    clean = df.to_csv(args.output_file, index=False) # index=False: no row-number column
-    # temporary: print(df)  lets you see each change as you build
+    df.to_csv(args.output_file, index=False) # index=False: no row-number column
     print_summary(line_in, line_out, df)
     
 # Only run main() when the file is run directly, not when imported
