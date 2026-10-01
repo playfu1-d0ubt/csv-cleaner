@@ -1,7 +1,19 @@
+"""
+clean_csv.py - tidy up a messy CSV export.
+
+Fixes inconsistent text, mixed date formats, currency symbols and
+duplicate rows, then saves a clean copy and prints a summary.
+
+Assumptions:
+  - Dates are UK day-first (01/09/2026 means 1 September).
+  - Amounts are in a single currency.
+"""
 import pandas as pd
 from datetime import datetime
 
 DATE_FORMATS = [
+    # Date formats we expect to see, tried in order. If a client's file has a
+    # new format, add it here.
     "%Y-%m-%d",   # 2026-09-01
     "%Y/%m/%d",   # 2026/09/06
     "%d/%m/%Y",   # 01/09/2026   (UK: day first)
@@ -11,7 +23,21 @@ DATE_FORMATS = [
 ]
 
 def load(path):
+     # Read the CSV file into a pandas DataFrame.
     return pd.read_csv(path)
+
+def clean_text(df):
+    # Standardise names, cities and emails.
+    for col in ["customer_name", "city"]:
+        df[col] = (
+            df[col]
+            .str.strip()                            # remove edge white space
+            .str.replace(r"\s+", " ", regex=True)   # collaspe repeated spaces
+            .str.title()                            # bOB sMITH" -> "Bob Smith"
+        )
+    # Emails are case-insensitive, so lowercase them for consistency
+    df["email"] = df["email"].str.strip().str.lower()
+    return df
 
 def parse_date(value):
     if pd.isna(value):
@@ -21,22 +47,8 @@ def parse_date(value):
         try:
             return datetime.strptime(text, fmt).strftime("%Y-%m-%d")
         except ValueError:
-            continue
-    return None   # no format matched
-
-
-def clean_text(df):
-    # strip spaces, collapse repeated spaces,
-    # title-case customer_name and city, lowercase email
-    for col in ["customer_name", "city"]:
-        df[col] = (
-            df[col]
-            .str.strip()
-            .str.replace(r"\s+", " ", regex=True)
-            .str.title()
-        )
-    df["email"] = df["email"].str.strip().str.lower()
-    return df
+            continue # wrong format, try the next one
+    return None    # Better to leave a blank than to guess a date we can't trust
 
 
 def clean_dates(df):
@@ -52,38 +64,46 @@ def clean_amount(df):
         .astype(str)                                   # make everything text first
         .str.replace(r"[^\d.\-]", "", regex=True)      # keep only digits, dots, minus signs
     )
+    # errors="coerce" turns unreadable values into NaN rather than crashing,
+    # so missing amounts stay flagged instead of being invented
     df["amount"] = pd.to_numeric(df["amount"], errors="coerce").round(2)
     return df
 
 
 def remove_duplicates(df):
-    # drop exact duplicate rows
+    #Drop exact duplicate rows.
+    #Must run after clean_text and clean_amount, so rows that differed only
+    #in spacing, case or formatting are recognised as duplicates.
+
     df=df.drop_duplicates()
     return df
+
+def print_summary(line_in, line_out, df):
+    # Print how many rows were processed and what is still missing.
+    print("Summary:")
+    print(f"Lines in: {line_in}")
+    print(f"Lines out: {line_out}")
+    print(f"Duplicates removed: {line_in - line_out}")
+    # Blanks are reported, not filled, so the client knows what data is missing
+    print(f"Blank emails: {df["email"].isna().sum()}")
+    print(f"Blank amount: {df["amount"].isna().sum()}")
+    print(f"Blank date: {df["order_date"].isna().sum()}")
 
 
 def main():
     df = load("orders_messy.csv")
-    line_in = len(df)
+    line_in = len(df) # count before cleaning, to report duplicates later
+    # Order matters: text and amounts first, so duplicates are caught properly
+    df = clean_text(df)
     df = clean_text(df) 
     df = clean_amount(df)
     df = remove_duplicates(df)
     df = clean_dates(df)
     line_out = len(df)
-    removed = line_in - line_out
-    blank_emails = df["email"].isna().sum()
-    blank_amount = df["amount"].isna().sum()
-    blank_date = df["order_date"].isna().sum()
-    print(df)  # temporary: lets you see each change as you build
-    print("Summary:")
-    print(f"Lines in: {line_in}")
-    print(f"Lines out: {line_out}")
-    print(f"Duplicates removed: {removed}")
-    print(f"Blank emails: {blank_emails}")
-    print(f"Blank amount: {blank_amount}")
-    print(f"Blank date: {blank_date}")
+    clean = df.to_csv("orders_clean.csv", index=False) # index=False: no row-number column
+    # temporary: print(df)  lets you see each change as you build
+    print_summary(line_in, line_out, df)
     
-
-
+# Only run main() when the file is run directly, not when imported
 if __name__ == "__main__":
-    main()
+    main() 
