@@ -1,8 +1,0 @@
-order_id,customer_name,email,order_date,amount,city
-1001,Alice Johnson,alice@example.com,2026-09-01,25.5,London
-1002,Bob Smith,bob@example.com,2026-09-01,40.0,Manchester
-1003,Carol White,carol@example.com,2026-09-03,15.0,Leeds
-1004,Dave Brown,,2026-09-04,60.0,Bristol
-1005,Eve Davis,eve@example.com,2026-09-05,,London
-1006,Frank Miller,frank@example.com,2026-09-06,30.0,Glasgow
-1007,Grace Lee,grace@example.com,2026-09-07,22.75,Edinburgh
