@@ -70,9 +70,19 @@ def main():
     df = remove_duplicates(df)
     df = clean_dates(df)
     line_out = len(df)
+    removed = line_in - line_out
+    blank_emails = df["email"].isna().sum()
+    blank_amount = df["amount"].isna().sum()
+    blank_date = df["order_date"].isna().sum()
     print(df)  # temporary: lets you see each change as you build
-    print("Lines in:", line_in)
-    print("Lines out:", line_out)
+    print("Summary:")
+    print(f"Lines in: {line_in}")
+    print(f"Lines out: {line_out}")
+    print(f"Duplicates removed: {removed}")
+    print(f"Blank emails: {blank_emails}")
+    print(f"Blank amount: {blank_amount}")
+    print(f"Blank date: {blank_date}")
+    
 
 
 if __name__ == "__main__":
