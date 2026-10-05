@@ -11,6 +11,7 @@ Assumptions:
 import pandas as pd
 from datetime import datetime
 import argparse
+import sys
 
 # Column-name keywords that mark a column as holding dates.
 # If a client's file uses a different name, add a word here.
@@ -35,8 +36,11 @@ def parse_args():
     return parser.parse_args()
 
 def load(path):
-     # Read the CSV file into a pandas DataFrame.
-    return pd.read_csv(path)
+    #Read the CSV file into a pandas DataFrame.
+    try:
+        return pd.read_csv(path)
+    except FileNotFoundError:
+        sys.exit(f"Error: can't find '{path}'. Check the file name and folder.")
 
 def clean_text(df):
     # Standardise names, cities and emails.
