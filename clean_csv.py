@@ -12,6 +12,10 @@ import pandas as pd
 from datetime import datetime
 import argparse
 
+# Column-name keywords that mark a column as holding dates.
+# If a client's file uses a different name, add a word here.
+DATE_KEYWORDS = ["date", "joined"]
+
 DATE_FORMATS = [
     # Date formats we expect to see, tried in order. If a client's file has a
     # new format, add it here.
@@ -36,16 +40,25 @@ def load(path):
 
 def clean_text(df):
     # Standardise names, cities and emails.
-    for col in ["customer_name", "city"]:
+    text_cols = [c for c in ["customer_name", "name", "city"] if c in df.columns]
+    for col in text_cols:
         df[col] = (
             df[col]
             .str.strip()                            # remove edge white space
-            .str.replace(r"\s+", " ", regex=True)   # collaspe repeated spaces
+            .str.replace(r"\s+", " ", regex=True)   # collapse repeated spaces
             .str.title()                            # bOB sMITH" -> "Bob Smith"
         )
     # Emails are case-insensitive, so lowercase them for consistency
-    df["email"] = df["email"].str.strip().str.lower()
+    if "email" in df.columns:
+        df["email"] = df["email"].str.strip().str.lower()    
     return df
+
+def find_date_columns(df):
+    #Return the names of columns that look like they hold dates
+    return [
+        c for c in df.columns
+        if any(k in c.lower() for k in DATE_KEYWORDS)
+    ]
 
 def parse_date(value):
     if pd.isna(value):
@@ -60,12 +73,15 @@ def parse_date(value):
 
 
 def clean_dates(df):
-    # convert order_date to one format (YYYY-MM-DD)
-    df["order_date"] = df["order_date"].apply(parse_date)
+    #Make every date column use the same YYYY-MM-DD format
+    for col in find_date_columns(df):
+        df[col] = df[col].apply(parse_date)
     return df
 
 
 def clean_amount(df):
+    if "amount" not in df.columns:
+            return df
     # remove the £ sign and convert to a number
     df["amount"] = (
         df["amount"]
@@ -83,8 +99,9 @@ def remove_duplicates(df):
     #Must run after clean_text and clean_amount, so rows that differed only
     #in spacing, case or formatting are recognised as duplicates.
 
-    df=df.drop_duplicates()
+    df = df.drop_duplicates()
     return df
+
 
 def print_summary(line_in, line_out, df):
     # Print how many rows were processed and what is still missing.
@@ -92,10 +109,11 @@ def print_summary(line_in, line_out, df):
     print(f"Lines in: {line_in}")
     print(f"Lines out: {line_out}")
     print(f"Duplicates removed: {line_in - line_out}")
-    # Blanks are reported, not filled, so the client knows what data is missing
-    print(f"Blank emails: {df["email"].isna().sum()}")
-    print(f"Blank amount: {df["amount"].isna().sum()}")
-    print(f"Blank date: {df["order_date"].isna().sum()}")
+    # Report blanks only for columns this file actually has.
+    # Blanks are reported, not filled, so the client knows what's missing.
+    for col in ["email", "amount"] + find_date_columns(df):
+        if col in df.columns:
+            print(f"Blank {col}: {df[col].isna().sum()}")
 
 
 def main():
