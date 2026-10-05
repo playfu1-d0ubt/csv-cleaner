@@ -83,8 +83,6 @@ csv-cleaner/
 
 ## What I learned
 
-## What I learned
-
 **Hardest part:** making the cleaner work on a second file with different columns. My first version only worked on the orders file because column names like `customer_name`, `amount` and `order_date` were written directly into the code. When I ran it on a contacts file, it crashed with a `KeyError`.
 
 **What went wrong and how I fixed it:** I read the traceback from the bottom up. It named the missing column (`customer_name`) and the function it happened in (`clean_text`). I fixed it by having each cleaning function check which columns exist in the file before touching them. Fixing one function just moved the error to the next one, so I worked through them one at a time until both files ran cleanly.
